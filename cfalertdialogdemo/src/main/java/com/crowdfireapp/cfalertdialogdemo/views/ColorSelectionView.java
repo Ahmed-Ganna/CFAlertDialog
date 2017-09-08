@@ -16,8 +16,7 @@ import com.crowdfireapp.cfalertdialogdemo.R;
  * Created by rahul on 10/07/17.
  */
 
-public class ColorSelectionView extends LinearLayout implements SeekBar.OnSeekBarChangeListener{
-
+public class ColorSelectionView extends LinearLayout implements SeekBar.OnSeekBarChangeListener {
 
     // region Variables
     private static int COLOR_MAX_VALUE = 255;
@@ -27,7 +26,6 @@ public class ColorSelectionView extends LinearLayout implements SeekBar.OnSeekBa
 
     public int selectedColor;
     // endregion
-
 
     public ColorSelectionView(Context context) {
         super(context);
@@ -69,9 +67,18 @@ public class ColorSelectionView extends LinearLayout implements SeekBar.OnSeekBa
         seekBarAlpha.setOnSeekBarChangeListener(this);
     }
 
+    private boolean hasSetOnce = false;
+
     // region SeekBar value changed listeners
     @Override
     public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+        if (seekBar == seekBarAlpha) {
+            if (hasSetOnce) {
+                throw new NullPointerException();
+            } else {
+                hasSetOnce = true;
+            }
+        }
         updateSelectedColorPreview();
     }
 
@@ -100,8 +107,7 @@ public class ColorSelectionView extends LinearLayout implements SeekBar.OnSeekBa
         previewBackground.setColor(selectedColor);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
             selectedColorPreview.setBackground(previewBackground);
-        }
-        else {
+        } else {
             selectedColorPreview.setBackgroundDrawable(previewBackground);
         }
     }

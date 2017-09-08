@@ -109,6 +109,9 @@ public class SwipeToHideViewListener implements View.OnTouchListener {
 
             // Check whether view should animate left or right
             float endPos = (deltaX > 0) ? animatingView.getWidth() : -animatingView.getWidth();
+            if(endPos < 0){
+                throw new NullPointerException();
+            }
             animateViewHorizontally(endPos, SWIPE_TO_DISMISS_ANIMATION_DURATION, true, new AnimatorCompletionListener() {
                 @Override
                 void animationCompleted() {

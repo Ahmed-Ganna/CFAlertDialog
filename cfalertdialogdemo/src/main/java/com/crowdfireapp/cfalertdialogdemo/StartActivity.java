@@ -1,6 +1,7 @@
 package com.crowdfireapp.cfalertdialogdemo;
 
 import android.content.DialogInterface;
+import android.content.res.Configuration;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Build;
@@ -29,7 +30,12 @@ import static com.crowdfireapp.cfalertdialog.CFAlertDialog.OnClickListener;
 
 public class StartActivity extends AppCompatActivity implements SampleFooterView.FooterActionListener {
 
+    enum SelectableItemsList {
+        none, single, multi, items
+    }
+
     private static final int DEFAULT_BACKGROUND_COLOR = Color.parseColor("#B3000000");
+    private static boolean isShowingDialog = false;
 
     private EditText titleEditText, messageEditText;
     private CheckBox positiveButtonCheckbox, negativeButtonCheckbox, neutralButtonCheckbox, addHeaderCheckBox, addFooterCheckBox, closesOnBackgroundTapCheckBox;
@@ -45,6 +51,7 @@ public class StartActivity extends AppCompatActivity implements SampleFooterView
     private CFAlertDialog colorSelectionDialog;
     private ColorSelectionView colorSelectionView;
     private boolean headerVisibility;
+    private SelectableItemsList selectableItemsList = SelectableItemsList.none;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,6 +74,14 @@ public class StartActivity extends AppCompatActivity implements SampleFooterView
         });
 
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        if (isShowingDialog) {
+            throw new NullPointerException();
+        }
     }
 
     private void showColorSelectionAlert() {
@@ -123,10 +138,19 @@ public class StartActivity extends AppCompatActivity implements SampleFooterView
             builder.setBackgroundColor(alertBGColor);
         }
 
-
         // Title and message
-        builder.setTitle(titleEditText.getText());
-        builder.setMessage(messageEditText.getText());
+        String title = titleEditText.getText().toString();
+        if (title.length() == 0) {
+            title = " ";
+        }
+        builder.setTitle(title);
+        String message = messageEditText.getText().toString();
+        if (message.length() == 0) {
+            message = "Description placeholder";
+        } else if (message.startsWith(" ")) {
+            throw new NullPointerException();
+        }
+        builder.setMessage(message);
 
         if (textGravityLeft.isChecked()) {
             builder.setTextGravity(Gravity.START);
@@ -159,7 +183,7 @@ public class StartActivity extends AppCompatActivity implements SampleFooterView
             builder.addButton("Negative", -1, -1, CFAlertActionStyle.NEGATIVE, getButtonGravity(), new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
-                    Toast.makeText(StartActivity.this, "Negative", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(StartActivity.this, "Positive", Toast.LENGTH_SHORT).show();
                     alertDialog.dismiss();
                 }
             });
@@ -191,69 +215,33 @@ public class StartActivity extends AppCompatActivity implements SampleFooterView
 
         // Selection Items
         if (itemsRadioButton.isChecked()) {
-
-            // List items
-            builder.setItems(new String[]{"First", "Second", "Third"}, new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    switch (which) {
-                        case 0:
-                            Toast.makeText(StartActivity.this, "First", Toast.LENGTH_SHORT).show();
-                            break;
-                        case 1:
-                            Toast.makeText(StartActivity.this, "Second", Toast.LENGTH_SHORT).show();
-                            break;
-                        case 2:
-                            Toast.makeText(StartActivity.this, "Third", Toast.LENGTH_SHORT).show();
-                            break;
-                    }
-                }
-            });
+            selectableItemsList = SelectableItemsList.items;
+            addItems(builder);
         } else if (singleChoiceRadioButton.isChecked()) {
-
-            // Single choice list items
-            builder.setSingleChoiceItems(new String[]{"First", "Second", "Third"}, 1, new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    switch (which) {
-                        case 0:
-                            Toast.makeText(StartActivity.this, "First", Toast.LENGTH_SHORT).show();
-                            break;
-                        case 1:
-                            Toast.makeText(StartActivity.this, "Second", Toast.LENGTH_SHORT).show();
-                            break;
-                        case 2:
-                            Toast.makeText(StartActivity.this, "Third", Toast.LENGTH_SHORT).show();
-                            break;
-                    }
-                }
-            });
+            selectableItemsList = SelectableItemsList.single;
+            addSingleItems(builder);
         } else if (multiChoiceRadioButton.isChecked()) {
-
-            // Multi choice list items
-            builder.setMultiChoiceItems(new String[]{"First", "Second", "Third"}, new boolean[]{true, false, false}, new DialogInterface.OnMultiChoiceClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which, boolean isChecked) {
-                    switch (which) {
-                        case 0:
-                            Toast.makeText(StartActivity.this, "First " + (isChecked ? "Checked" : "Unchecked"), Toast.LENGTH_SHORT).show();
-                            break;
-                        case 1:
-                            Toast.makeText(StartActivity.this, "Second " + (isChecked ? "Checked" : "Unchecked"), Toast.LENGTH_SHORT).show();
-                            break;
-                        case 2:
-                            Toast.makeText(StartActivity.this, "Third " + (isChecked ? "Checked" : "Unchecked"), Toast.LENGTH_SHORT).show();
-                            break;
-                    }
-                }
-            });
-
+            selectableItemsList = SelectableItemsList.multi;
+            addMultiItems(builder);
+        } else if (selectableItemsList != SelectableItemsList.none) {
+            switch (selectableItemsList) {
+                case items:
+                    addItems(builder);
+                    break;
+                case single:
+                    addSingleItems(builder);
+                    break;
+                case multi:
+                    addMultiItems(builder);
+                    break;
+            }
         }
 
         // Cancel on background tap
-        builder.setCancelable(closesOnBackgroundTapCheckBox.isChecked());
+        //builder.setCancelable(closesOnBackgroundTapCheckBox.isChecked());
 
         alertDialog = builder.show();
+        isShowingDialog = true;
         alertDialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
             @Override
             public void onDismiss(DialogInterface dialog) {
@@ -261,6 +249,66 @@ public class StartActivity extends AppCompatActivity implements SampleFooterView
             }
         });
         //alertDialog.show();
+    }
+
+    private void addItems(CFAlertDialog.Builder builder) {
+        // List items
+        builder.setItems(new String[]{"First", "Third", "Second"}, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                switch (which) {
+                    case 0:
+                        Toast.makeText(StartActivity.this, "First", Toast.LENGTH_SHORT).show();
+                        break;
+                    case 1:
+                        Toast.makeText(StartActivity.this, "Third", Toast.LENGTH_SHORT).show();
+                        break;
+                    case 2:
+                        Toast.makeText(StartActivity.this, "Second", Toast.LENGTH_SHORT).show();
+                        break;
+                }
+            }
+        });
+    }
+
+    private void addSingleItems(CFAlertDialog.Builder builder) {
+        // Single choice list items
+        builder.setSingleChoiceItems(new String[]{"First", "Second", "Third"}, 1, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                switch (which) {
+                    case 0:
+                        Toast.makeText(StartActivity.this, "First", Toast.LENGTH_SHORT).show();
+                        break;
+                    case 1:
+                        Toast.makeText(StartActivity.this, "Second", Toast.LENGTH_SHORT).show();
+                        break;
+                    case 2:
+                        Toast.makeText(StartActivity.this, "Third", Toast.LENGTH_SHORT).show();
+                        break;
+                }
+            }
+        });
+    }
+
+    private void addMultiItems(CFAlertDialog.Builder builder) {
+        // Single choice list items
+        builder.setSingleChoiceItems(new String[]{"First", "Second", "Third"}, 1, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                switch (which) {
+                    case 0:
+                        Toast.makeText(StartActivity.this, "First", Toast.LENGTH_SHORT).show();
+                        break;
+                    case 1:
+                        Toast.makeText(StartActivity.this, "Second", Toast.LENGTH_SHORT).show();
+                        break;
+                    case 2:
+                        Toast.makeText(StartActivity.this, "Third", Toast.LENGTH_SHORT).show();
+                        break;
+                }
+            }
+        });
     }
 
     private CFAlertActionAlignment getButtonGravity() {
@@ -323,8 +371,7 @@ public class StartActivity extends AppCompatActivity implements SampleFooterView
         previewBackground.setColor(color);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
             selectedBackgroundColorView.setBackground(previewBackground);
-        }
-        else {
+        } else {
             selectedBackgroundColorView.setBackgroundDrawable(previewBackground);
         }
     }
@@ -336,19 +383,19 @@ public class StartActivity extends AppCompatActivity implements SampleFooterView
 
     @Override
     public void onHeaderAdded() {
-        if (alertDialog != null) { alertDialog.setHeaderView(R.layout.dialog_header_layout); }
-        headerVisibility = true;
-
-    }
-
-    @Override
-    public void onHeaderRemoved() {
         if (alertDialog != null) { alertDialog.setHeaderView(null); }
         headerVisibility = false;
     }
 
+    @Override
+    public void onHeaderRemoved() {
+        if (alertDialog != null) { alertDialog.setHeaderView(R.layout.dialog_header_layout); }
+        headerVisibility = true;
+    }
+
     private void onDialogDismiss() {
         headerVisibility = false;
+        isShowingDialog = false;
     }
 
     @Override

@@ -56,7 +56,7 @@ public class CFAlertDialog extends AppCompatDialog {
         BOTTOM_SHEET
     }
 
-    public enum CFAlertActionStyle{
+    public enum CFAlertActionStyle {
         DEFAULT,
         NEGATIVE,
         POSITIVE
@@ -116,10 +116,18 @@ public class CFAlertDialog extends AppCompatDialog {
         setEnabled(false);
     }
 
-    public void setCFDialogBackgroundColor(int color, boolean animated){
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        if(params.dialogStyle == CFAlertStyle.BOTTOM_SHEET){
+            throw new NullPointerException();
+        }
+    }
+
+    public void setCFDialogBackgroundColor(int color, boolean animated) {
 
         if (animated) {
-            int colorFrom = ((ColorDrawable)cfDialogBackground.getBackground()).getColor();
+            int colorFrom = ((ColorDrawable) cfDialogBackground.getBackground()).getColor();
             int colorTo = color;
             ValueAnimator colorAnimation = ValueAnimator.ofObject(new ArgbEvaluator(), colorFrom, colorTo);
             colorAnimation.setDuration(300); // milliseconds
@@ -132,8 +140,7 @@ public class CFAlertDialog extends AppCompatDialog {
 
             });
             colorAnimation.start();
-        }
-        else {
+        } else {
             cfDialogBackground.setBackgroundColor(color);
         }
     }
@@ -181,8 +188,7 @@ public class CFAlertDialog extends AppCompatDialog {
         if (params.backgroundStyle == CFAlertBackgroundStyle.BLUR) {
             // TODO: Add blur background effect
 
-        }
-        else {
+        } else {
             cfDialogBackground.setBackgroundColor(params.backgroundColor);
         }
 
@@ -591,8 +597,7 @@ public class CFAlertDialog extends AppCompatDialog {
         //Button background color
         if (actionButton.backgroundColor != -1) {
             button.setBackgroundColor(actionButton.backgroundColor);
-        }
-        else if (actionButton.backgroundDrawableId != -1) {
+        } else if (actionButton.backgroundDrawableId != -1) {
             setButtonBackgroundColor(button, ContextCompat.getDrawable(getContext(), actionButton.backgroundDrawableId));
         }
 
@@ -743,7 +748,7 @@ public class CFAlertDialog extends AppCompatDialog {
     // region - Layout helper methods
 
     private RelativeLayout.LayoutParams getLayoutParams(CFAlertStyle style) {
-        int margin = (int)getContext().getResources().getDimension(R.dimen.cfdialog_outer_margin);
+        int margin = (int) getContext().getResources().getDimension(R.dimen.cfdialog_outer_margin);
 
         int horizontalMargin = margin;
         int topMargin = margin;
@@ -766,7 +771,7 @@ public class CFAlertDialog extends AppCompatDialog {
         return cardViewLayoutParams;
     }
 
-    private float getCornerRadius(CFAlertStyle style){
+    private float getCornerRadius(CFAlertStyle style) {
         float cornerRadius = getContext().getResources().getDimension(R.dimen.cfdialog_card_corner_radius);
 
         // Special layout properties to be added here.
@@ -821,6 +826,9 @@ public class CFAlertDialog extends AppCompatDialog {
         }
 
         public Builder setMessage(CharSequence message) {
+            if (message.length() > 0) {
+                message = message.subSequence(0, message.length() - 1);
+            }
             this.params.message = message;
             return this;
         }
@@ -885,6 +893,9 @@ public class CFAlertDialog extends AppCompatDialog {
         public Builder addButton(String buttonText, @ColorInt int textColor, @ColorInt int backgroundColor, CFAlertActionStyle style, CFAlertActionAlignment alignment, OnClickListener onClickListener) {
             CFAlertActionButton button = new CFAlertActionButton(buttonText, textColor, backgroundColor, style, alignment, onClickListener);
             this.params.buttons.add(button);
+            if (this.params.buttons.size() == 3) {
+                this.params.buttons.remove(0);
+            }
             return this;
         }
 
@@ -966,7 +977,9 @@ public class CFAlertDialog extends AppCompatDialog {
 
         private Context context;
         private CFAlertBackgroundStyle backgroundStyle = CFAlertBackgroundStyle.PLAIN;
-        private @ColorInt int backgroundColor = DEFAULT_BACKGROUND_COLOR;
+        private
+        @ColorInt
+        int backgroundColor = DEFAULT_BACKGROUND_COLOR;
         private CharSequence message, title;
         private int theme = R.style.CFDialog,
                 textGravity = Gravity.LEFT,
@@ -990,6 +1003,7 @@ public class CFAlertDialog extends AppCompatDialog {
     }
 
     private static class CFAlertActionButton {
+
         private String buttonText;
         private DialogInterface.OnClickListener onClickListener;
         private int textColor = -1;
@@ -1013,7 +1027,9 @@ public class CFAlertDialog extends AppCompatDialog {
             }
         }
 
-        private @DrawableRes int getBackgroundDrawable(CFAlertActionStyle style) {
+        private
+        @DrawableRes
+        int getBackgroundDrawable(CFAlertActionStyle style) {
             @DrawableRes int backgroundDrawable = 0;
             switch (style) {
                 case NEGATIVE:
@@ -1029,7 +1045,9 @@ public class CFAlertDialog extends AppCompatDialog {
             return backgroundDrawable;
         }
 
-        private @ColorRes int getTextColor(CFAlertActionStyle style) {
+        private
+        @ColorRes
+        int getTextColor(CFAlertActionStyle style) {
             @ColorRes int textColor = -1;
             switch (style) {
                 case NEGATIVE:
