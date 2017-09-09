@@ -115,7 +115,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="12dp"
                         android:hint="Description"
-                        android:text=" Add message body here. If the text exceeds a certain limit then the alert will automatically become scrollable."/>
+                        android:text="Add message body here. If the text exceeds a certain limit then the alert will automatically become scrollable."/>
 
 
                     <TextView
